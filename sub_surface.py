@@ -40,6 +40,8 @@ def main():
  
     
     current_frame = 0
+    # 碰撞的帧索引
+    colliding_frame = []
     clock = pygame.time.Clock()
     
     while True:
@@ -53,6 +55,16 @@ def main():
         for i in range(num_frames):
             # 将每个帧显示在屏幕上，形成一个3x4的网格
             screen.blit(frames[i]["frame"], frames[i]["rect"])
+            # 为碰撞的帧添加红色边框
+            if i in colliding_frame:
+                pygame.draw.rect(screen, (255, 0, 0), frames[i]["rect"], 1)
+        # 如果正在拖动且有碰撞，用绿色边框标记被拖动的帧
+        if is_selected :
+            pygame.draw.rect(screen, (0, 255, 0), frames[-1]["rect"], 1)
+        
+        # 绘制一个矩形画框,大小等于整个图像
+        pygame.draw.rect(screen, (0, 0, 0), puzzle_sheet.get_rect(), 1)
+        
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -79,12 +91,27 @@ def main():
                     # 最后一帧移动到鼠标位置，保持点击位置与帧中心的偏移量不变
                     _rect = frames[-1]["rect"]
                     _rect.center = (event.pos[0] - clicked_pos_to_frame[0], event.pos[1] - clicked_pos_to_frame[1])
-            
+
+                    # 碰撞检测：检查当前拖动的帧是否与其他帧碰撞
+                    colliding_frame = []
+                    current_framerect = frames[-1]["rect"]
+                    for i in range(num_frames-1):
+                        if current_framerect.colliderect(frames[i]["rect"]):
+                            colliding_frame.append(i)
+                    
             # 鼠标松开事件
             if event.type == pygame.MOUSEBUTTONUP:
                 if is_selected:
                     is_selected = False
-
+                    colliding_frame = []
+                    
+                    # 让移动到画框内的帧吸附到整数位置
+                    # 先判断时候在画框内
+                    _rect = puzzle_sheet.get_rect()
+                    if _rect.collidepoint(event.pos):
+                        _rect = frames[-1]["rect"]
+                        _rect.left = round(_rect.left / frame_width) * frame_width
+                        _rect.top = round(_rect.top / frame_height) * frame_height
                     
         pygame.display.flip()
         clock.tick(60)
