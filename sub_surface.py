@@ -9,6 +9,12 @@ def main():
     # 加载拼图（假设有4个32x32的帧横向排列）
     puzzle_sheet = pygame.image.load("puzzle_sheet.jpg")
     
+    # 时候选中帧
+    is_selected = False
+    
+    # 鼠标点击位置与帧中心的偏移量
+    clicked_pos_to_frame = [0, 0]
+    
     # 切片参数
     frame_width = 100
     frame_height = 100
@@ -60,15 +66,28 @@ def main():
                     print(_rect)
                     if _rect.collidepoint(event.pos):
                         print("Clicked on frame", length-1)
-                        # 图片向右移动10像素
-                        _rect.x += 10
                         frames.append(frames.pop(length-1))
+                        is_selected = True
+                        # 计算鼠标点击位置与帧中心的偏移量
+                        clicked_pos_to_frame[0] = event.pos[0] - _rect.centerx
+                        clicked_pos_to_frame[1] = event.pos[1] - _rect.centery
                         break
                     length -= 1
+            # 鼠标移动事件
+            if event.type == pygame.MOUSEMOTION:
+                if is_selected:
+                    # 最后一帧移动到鼠标位置，保持点击位置与帧中心的偏移量不变
+                    _rect = frames[-1]["rect"]
+                    _rect.center = (event.pos[0] - clicked_pos_to_frame[0], event.pos[1] - clicked_pos_to_frame[1])
+            
+            # 鼠标松开事件
+            if event.type == pygame.MOUSEBUTTONUP:
+                if is_selected:
+                    is_selected = False
 
                     
         pygame.display.flip()
-        clock.tick(5)
+        clock.tick(60)
 
 if __name__ == "__main__":
     main()
